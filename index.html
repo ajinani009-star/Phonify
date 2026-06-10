@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHONIFY – AI Phone Model Identifier</title>
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Identify mobile phone models instantly using advanced AI recognition in your browser. Fully local and private.">
+    <meta name="keywords" content="phone identifier, AI, TensorFlow.js, Teachable Machine, mobile recognition, web cam scanner">
+    <!-- Google Fonts: Outfit & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    <!-- TensorFlow.js and Teachable Machine libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+
+    <!-- Ambient Background Blur Blobs -->
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <!-- Navigation Header -->
+    <header class="navbar">
+        <div class="container nav-container">
+            <div class="logo">
+                <i data-lucide="smartphone" class="logo-icon"></i>
+                <span>PHONIFY</span>
+            </div>
+            <div class="nav-badge">
+                <span class="pulse-dot"></span>
+                <span>AI Engine v1.0</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Split-Screen Hero Section -->
+        <section class="hero-grid-section">
+            <!-- Left Side: Copy -->
+            <div class="hero-content">
+                <div class="hero-tag">
+                    <i data-lucide="cpu" class="tag-icon"></i>
+                    <span>Teachable Machine Powered</span>
+                </div>
+                <div class="hero-brand">PHONIFY</div>
+                <h1 class="hero-title">AI Phone Model Identifier</h1>
+                <p class="hero-description">
+                    Experience real-time mobile device classification directly in your browser. 
+                    Identify phone models instantly with our locally running deep learning engine.
+                </p>
+                <div class="hero-cta-group">
+                    <button class="btn btn-primary" id="btn-hero-scan">
+                        <span>Start Scanning</span>
+                        <i data-lucide="scan"></i>
+                    </button>
+                    <a href="#features-section" class="btn btn-secondary" id="btn-hero-learn">
+                        <span>Learn More</span>
+                        <i data-lucide="info"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Right Side: Video Showcase Card -->
+            <div class="hero-visual">
+                <div class="video-card-container">
+                    <div class="video-card-glow"></div>
+                    <div class="video-card">
+                        <video 
+                            src="video/Create_a_cinematic_premium_tec.mp4" 
+                            autoplay 
+                            muted 
+                            loop 
+                            playsinline
+                            preload="auto"
+                            class="showcase-video">
+                        </video>
+                        <!-- Glassmorphic Overlay Border -->
+                        <div class="video-overlay"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Scanner Section -->
+        <section id="scanner-section" class="scanner-container">
+            <!-- Left: Webcam Card -->
+            <div class="card scanner-card">
+                <div class="card-header">
+                    <div class="status-badge" id="camera-status-badge">
+                        <span class="status-indicator inactive"></span>
+                        <span id="camera-status-text">Camera Off</span>
+                    </div>
+                    <div class="model-badge" id="model-status-badge">
+                        <i data-lucide="database" class="badge-icon"></i>
+                        <span id="model-status-text">Loading Model...</span>
+                    </div>
+                </div>
+
+                <!-- Video Frame Area -->
+                <div class="webcam-viewport" id="webcam-viewport">
+                    <!-- Scanner Laser Overlay -->
+                    <div class="scan-laser" id="scan-laser"></div>
+                    
+                    <!-- Webcam Canvas Will Append Here -->
+                    <div id="webcam-container" class="webcam-wrapper"></div>
+                    
+                    <!-- Placeholder visual when camera is off -->
+                    <div class="webcam-placeholder" id="webcam-placeholder">
+                        <div class="placeholder-icon-container">
+                            <i data-lucide="aperture" class="placeholder-icon pulse"></i>
+                        </div>
+                        <h3>Webcam Feed Inactive</h3>
+                        <p>Click "Start Camera" below to grant camera access and begin scanning.</p>
+                    </div>
+
+                    <!-- Loader Visual for Model Loading -->
+                    <div class="webcam-loader" id="webcam-loader">
+                        <div class="spinner"></div>
+                        <h3>Initializing AI Engine</h3>
+                        <p>Downloading Neural Network weights...</p>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <button class="btn btn-scan" id="btn-toggle-camera">
+                        <i data-lucide="video" class="btn-icon"></i>
+                        <span id="btn-text">Start Camera</span>
+                    </button>
+                    <p class="helper-text">
+                        <i data-lucide="shield-check" class="helper-icon"></i>
+                        Permissions required: Camera Access. All image processing remains local.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right: Prediction Panel -->
+            <div class="card prediction-card">
+                <div class="card-header border-bottom">
+                    <h2 class="card-title">
+                        <i data-lucide="activity" class="card-title-icon"></i>
+                        Live Prediction
+                    </h2>
+                </div>
+
+                <!-- Top Prediction (Hero State) -->
+                <div class="hero-prediction" id="hero-prediction-box">
+                    <div class="hero-label">Detected Device</div>
+                    <div class="hero-value-container">
+                        <span class="hero-value" id="top-prediction-name">Ready to Scan</span>
+                        <span class="hero-percent" id="top-prediction-percent">—</span>
+                    </div>
+                    <div class="confidence-glow-indicator" id="glow-indicator"></div>
+                </div>
+
+                <!-- Scrollable Confidence List -->
+                <div class="prediction-list" id="prediction-list">
+                    <div class="list-placeholder" id="list-placeholder">
+                        <i data-lucide="line-chart" class="placeholder-chart-icon"></i>
+                        <p>Real-time prediction confidence percentages will show here once camera scans.</p>
+                    </div>
+                </div>
+                
+                <!-- Polished Demo Disclaimer -->
+                <div class="card-footer disclaimer-footer">
+                    <p class="disclaimer-text">
+                        <i data-lucide="info" class="disclaimer-icon"></i>
+                        <span><strong>Demo Notice:</strong> This preview model is trained on a limited device library. Expanded model coverage and high-accuracy classification updates are coming soon.</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features-section" class="features">
+            <h2 class="features-title">Cutting-Edge Features</h2>
+            <div class="features-grid">
+                <!-- Card 1 -->
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <i data-lucide="scan-eye"></i>
+                    </div>
+                    <h3>AI Recognition</h3>
+                    <p>Powered by a custom-trained deep neural network that categorizes phone models with high precision.</p>
+                </div>
+                <!-- Card 2 -->
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <i data-lucide="zap"></i>
+                    </div>
+                    <h3>Real-Time Detection</h3>
+                    <p>Continuous classification loops directly within the browser thread, yielding instantaneous feedback.</p>
+                </div>
+                <!-- Card 3 -->
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <i data-lucide="shield-alert"></i>
+                    </div>
+                    <h3>100% Client-Side</h3>
+                    <p>Zero server uploads. Your camera feed stays strictly on your machine, ensuring absolute security and privacy.</p>
+                </div>
+                <!-- Card 4 -->
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <i data-lucide="layout"></i>
+                    </div>
+                    <h3>Modern Design</h3>
+                    <p>A beautifully tuned dark UI showcasing glowing glassmorphic elements, soft shadows, and subtle micro-interactions.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Creators Section -->
+        <section class="creators">
+            <h2 class="creators-title">Meet the Creators</h2>
+            <div class="creators-grid">
+                <!-- Creator 1 -->
+                <div class="creator-card">
+                    <div class="creator-avatar">MA</div>
+                    <h3>Munawar Ali</h3>
+                    <p class="creator-role">AI Engineer</p>
+                </div>
+                <!-- Creator 2 -->
+                <div class="creator-card">
+                    <div class="creator-avatar">AA</div>
+                    <h3>Ajin Ani</h3>
+                    <p class="creator-role">UI/UX Designer</p>
+                </div>
+                <!-- Creator 3 -->
+                <div class="creator-card">
+                    <div class="creator-avatar">NR</div>
+                    <h3>Nevin Reji</h3>
+                    <p class="creator-role">Frontend Architect</p>
+                </div>
+                <!-- Creator 4 -->
+                <div class="creator-card">
+                    <div class="creator-avatar">NS</div>
+                    <h3>Noel Sani</h3>
+                    <p class="creator-role">ML Specialist</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Error Toast Notification Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-content">
+            <p>© 2026 PHONIFY. All rights reserved.</p>
+            <p class="footer-attribution">
+                Powered by <a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noopener">Teachable Machine</a> & <a href="https://js.tensorflow.org/" target="_blank" rel="noopener">TensorFlow.js</a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Script to run Lucide Icons and app functionality -->
+    <script src="script.js"></script>
+    <script>
+        // Initialize Lucide Icons on load
+        lucide.createIcons();
+    </script>
+</body>
+</html>
